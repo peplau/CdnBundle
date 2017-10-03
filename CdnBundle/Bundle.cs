@@ -144,6 +144,15 @@ namespace CdnBundle
         {
             loadType = "LOCAL";
             string fileContents = System.IO.File.ReadAllText(getLocalFilePath());
+            
+            if (useMinification)
+            {
+                var minifier = new Microsoft.Ajax.Utilities.Minifier();
+                fileContents = type == BundleType.CSS
+                    ? minifier.MinifyStyleSheet(fileContents)
+                    : minifier.MinifyJavaScript(fileContents);
+            }            
+            
             return fileContents;
         }
 
