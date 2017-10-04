@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using Microsoft.Ajax;
+using Microsoft.Ajax.Utilities;
 
 namespace CdnBundle
 {
@@ -17,6 +18,11 @@ namespace CdnBundle
         public BundleType type { get; set; }
         private static Dictionary<string, DateTime> cacheRecords = new Dictionary<string, DateTime>();
         private string loadType { get; set; }
+        
+        public static void ClearAllRecords()
+        {
+            cacheRecords.Clear();
+        }        
 
         public Bundle()
         {
@@ -126,8 +132,15 @@ namespace CdnBundle
             }
             if (useMinification)
             {
-                if (type == BundleType.CSS) response = minifier.MinifyStyleSheet(response);
-                else response = minifier.MinifyJavaScript(response);
+                if (type == BundleType.CSS) response = minifier.MinifyStyleSheet(response, new CssSettings
+                {
+                    CommentMode = CssComment.None
+                });
+                else response = minifier.MinifyJavaScript(response,new CodeSettings
+                {
+                    StrictMode = true,
+                    PreserveImportantComments = false
+                });
             }
             if (!String.IsNullOrEmpty(localUrl))
             {
@@ -144,6 +157,22 @@ namespace CdnBundle
         {
             loadType = "LOCAL";
             string fileContents = System.IO.File.ReadAllText(getLocalFilePath());
+            
+            if (useMinification)
+            {
+                var minifier = new Microsoft.Ajax.Utilities.Minifier();
+                fileContents = type == BundleType.CSS
+                    ? minifier.MinifyStyleSheet(fileContents, new CssSettings
+                    {
+                        CommentMode = CssComment.None
+                    })
+                    : minifier.MinifyJavaScript(fileContents, new CodeSettings
+                    {
+                        StrictMode = true,
+                        PreserveImportantComments = false
+                    });
+            }
+            
             return fileContents;
         }
 
